@@ -1,12 +1,12 @@
 # MulerTech Docker-tests
 
-Le package **MulerTech Docker-tests** permet de configurer et d'exécuter des tests PHP dans un environnement Docker.
+The **MulerTech Docker-tests** package allows you to configure and run PHP tests in a Docker environment.
 
 ## Description
 
-Ce package configure un conteneur Docker pour exécuter des tests PHP en utilisant PHPUnit. Il crée un fichier `.env.test` avec les informations nécessaires pour construire l'image Docker et exécuter les tests.
+This package configures a Docker container to run PHP tests using PHPUnit. It creates a .env.test file with the necessary information to build the Docker image and run the tests.
 
-## Prérequis
+## Prerequisites
 
 - Docker
 - PHP
@@ -14,52 +14,65 @@ Ce package configure un conteneur Docker pour exécuter des tests PHP en utilisa
 
 ## Installation
 
-1. Clonez le dépôt du projet.
-2. Installez les dépendances avec Composer :
+1. Include the package as a dev dependency with Composer :
+
+    ```sh
+    composer require-dev mulertech/docker-tests
+    ```
+
+2. Run the following command to install the package :
 
     ```sh
     composer install
     ```
 
-## Utilisation
+## Usage
 
-### Lancer les tests
+### Running the tests
 
-Pour lancer les tests, utilisez la commande suivante :
+To run the tests, use the following command:
 
 ```sh
 ./vendor/bin/mtdocker test
 ```
 
-Cette commande va :
-- Vérifier si le conteneur Docker mt-docker-tests est en cours d'exécution.
-- Si le conteneur n'est pas en cours d'exécution, il sera démarré.
-- Exécuter les tests PHPUnit dans le conteneur.
-- Arrêter le conteneur si il n'était pas en cours d'exécution avant l'exécution des tests.
+This command will:  
+- Check if the Docker container `mt-docker-tests` is running.
+- If the container is not running, it will be started.
+- Run the PHPUnit tests in the container.
+- Stop the container if it was not running before the tests were executed.
 
-### Démarrer le conteneur docker
+### Starting the Docker container
 
-Pour démarrer le conteneur Docker, utilisez la commande suivante :
+To start the Docker container, use the following command :
 
 ```sh
 ./vendor/bin/mtdocker up
 ```
 
-Pour démarrer le conteneur Docker en mode détaché, utilisez la commande suivante :
+To start the Docker container in detached mode, use the following command :
 
 ```sh
 ./vendor/bin/mtdocker up -d
 ```
 
-### Arrêter le conteneur docker
+### Stopping the Docker container
 
-Pour arrêter le conteneur Docker, utilisez la commande suivante :
+To stop the Docker container, use the following command :
 
 ```sh
 ./vendor/bin/mtdocker down
 ```
 
-### Création du fichier `.env.test`
+### Creating the `.env.test` file
 
-Le fichier `.env.test` est automatiquement créé à la racine du projet si il n'existe pas lors de l'exécution des commandes suivantes.
+The `.env.test` file is created automatically when the package is installed. It contains the following information:
 
+```sh
+PHP_IMAGE=php:8.4-fpm-alpine
+USER_ID=<id of the current user>
+GROUP_ID=<id of the group of the current user>
+```
+
+The `USER_ID` and `GROUP_ID` are used to set the user and group of the current user in the Docker container.
+This is done to avoid permission issues when running the tests and to create files or folders (if needed) with the correct permissions.
