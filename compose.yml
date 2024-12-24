@@ -1,0 +1,14 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: "Dockerfile"
+      args:
+        USER_ID: "${USER_ID?error}"
+        GROUP_ID: "${GROUP_ID?error}"
+        PHP_IMAGE: "${PHP_IMAGE?error}"
+    container_name: "mt-docker-tests"
+    volumes:
+      - "../../..:/var/www/html"
+    env_file:
+      - ../../../.env.test

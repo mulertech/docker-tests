@@ -1,0 +1,99 @@
+#!/usr/bin/env php
+<?php
+
+function getProjectDir(): string
+{
+    $projectDir = dirname(__DIR__);
+
+    while (!file_exists($projectDir . '/composer.json')) {
+        $projectDir = dirname($projectDir);
+    }
+
+    return $projectDir;
+}
+
+function getPhpVersion(): string
+{
+    $composer = file_get_contents(getProjectDir() . '/composer.json');
+    preg_match('/"php": "(.+)"/', $composer, $matches);
+    $php = $matches[1] ?? '';
+
+    if ($php === '') {
+        return '';
+    }
+
+    preg_match_all('/[\^>=~]+([0-9]\.[0-9]*)|[\^>=~]+([0-9]\.[0-9]*)/', $composer, $matches);
+    return $matches[1][1] ?? $matches[1][0] ?? '';
+}
+
+function createEnvFile(): void
+{
+    $uid = getmyuid();
+    $gid = getmygid();
+    $phpVersion = getPhpVersion();
+    $image = 'php:' . ($phpVersion === '' ? '' : $phpVersion . '-') . 'fpm-alpine';
+
+    $write = file_put_contents(
+        getProjectDir() . '/.env.test', 'PHP_IMAGE=' . $image . PHP_EOL . 'USER_ID=' . $uid . PHP_EOL . 'GROUP_ID=' . $gid
+    );
+
+    if ($write === false) {
+        echo 'Failed to create .env file';
+    }
+}
+
+function dockerComposeCommand(): string
+{
+    $projectDir = getProjectDir();
+    $dockerTestDir = $projectDir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'mulertech' . DIRECTORY_SEPARATOR . 'docker-tests';
+    return 'docker compose -f ' . $dockerTestDir . DIRECTORY_SEPARATOR . 'compose.yml --env-file ' . $projectDir . DIRECTORY_SEPARATOR . '.env.test';
+}
+
+function dockerComposeUp(string $arg2): void
+{
+    $command = dockerComposeCommand() . ' up';
+    $command .= $arg2 === '-d' ? ' -d' : '';
+    exec($command);
+}
+
+function dockerComposeDown(): void
+{
+    $command = dockerComposeCommand() . ' down';
+    exec($command);
+}
+
+function test(): void
+{
+    $dockerUp = str_contains(exec('docker ps -a'), 'mt-docker-tests');
+    if (!$dockerUp) {
+        dockerComposeUp('-d');
+    }
+
+    $cmd = 'docker exec -it mt-docker-tests ./vendor/bin/phpunit';
+    $output = shell_exec($cmd);
+    echo $output;
+
+    if (!$dockerUp) {
+        dockerComposeDown();
+    }
+}
+
+// Create .env.test file if it does not exist
+if (!file_exists(getProjectDir() . '/.env.test')) {
+    createEnvFile();
+}
+
+$arg1 = $_SERVER['argv'][1] ?? '';
+$arg2 = $_SERVER['argv'][2] ?? '';
+
+if ($arg1 === 'test') {
+    test();
+}
+
+if ($arg1 === 'up') {
+    dockerComposeUp($arg2);
+}
+
+if ($arg1 === 'down') {
+    dockerComposeDown();
+}
