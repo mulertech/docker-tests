@@ -64,6 +64,34 @@ To stop the Docker container, use the following command :
 ./vendor/bin/mtdocker down
 ```
 
+### Configuring the Docker container into PHPStorm
+
+To configure the Docker container into PHPStorm, follow these steps:
+
+1. Open the PHPStorm settings.
+2. Go to `PHP`.
+3. Click on the `...` button next to the `CLI Interpreter` field.
+4. Click on the `+` button and select `From Docker, Vagrant, VM, WSL, Remote...`.
+5. Configure the remote PHP interpreter as follows:
+    - Select `Docker Compose`.
+    - Set the server to `Docker` or click on `New...` if this server does not exist and :
+        - Set the name to `Docker`.
+        - Select `Docker for Windows` or `Unix socket` depending on your system.
+        - Click on `OK`.
+    - Set the configuration files to `./vendor/mulertech/docker-tests/compose.yml`.
+    - Set the service to `php`.
+    - Click on `OK`.
+6. Select `Connect to existing container ('docker-compose exec')` in the `Lifecycle` section.
+7. Click on `OK` to save the configuration.
+
+To configure PHPUnit, follow these steps:
+
+1. Go to `PHP` > `Test Frameworks`.
+2. Click on the `+` button and select `PHPUnit by Remote Interpreter`.
+3. Set the interpreter to `php` and click on `OK`.
+4. Set the path to script to `/var/www/html/vendor/autoload.php`.
+5. Click on `OK` to save the configuration.
+
 ### Creating the `.env.test` file
 
 The `.env.test` file is created automatically when the package is installed. It contains the following information:
