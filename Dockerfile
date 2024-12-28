@@ -1,4 +1,4 @@
-ARG PHP_IMAGE
+ARG PHP_IMAGE=php:fpm-alpine
 
 FROM composer
 FROM ${PHP_IMAGE}

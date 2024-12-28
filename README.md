@@ -78,11 +78,10 @@ To configure the Docker container into PHPStorm, follow these steps:
         - Set the name to `Docker`.
         - Select `Docker for Windows` or `Unix socket` depending on your system.
         - Click on `OK`.
-    - Set the configuration files to `./vendor/mulertech/docker-tests/compose.yml`.
+    - Set the configuration files to `./mt-compose.yml`.
     - Set the service to `php`.
     - Click on `OK`.
-6. Select `Connect to existing container ('docker-compose exec')` in the `Lifecycle` section.
-7. Click on `OK` to save the configuration.
+6. Click on `OK` to save the configuration.
 
 To configure PHPUnit, follow these steps:
 
@@ -92,17 +91,26 @@ To configure PHPUnit, follow these steps:
 4. Set the path to script to `/var/www/html/vendor/autoload.php`.
 5. Click on `OK` to save the configuration.
 
-### Creating the `.env.test` file
+### Creating the `mt-compose.yml` file
 
-The `.env.test` file is created automatically when the container starts. It contains the following information :
+The `mt-compose.yml` file is created automatically when the container starts. It contains the following information :
 
 ```sh
-PHP_IMAGE=php:8.4-fpm-alpine
-USER_ID=<id of the current user>
-GROUP_ID=<id of the group of the current user>
-CONTAINER_NAME=mt-docker-8.4
+services:
+  php:
+    build:
+      context: .
+      dockerfile: "./vendor/mulertech/docker-tests/Dockerfile"
+      args:
+        USER_ID: $uid
+        GROUP_ID: $gid
+        PHP_IMAGE: "$image"
+    container_name: "$containerName"
+    volumes:
+      - "./:/var/www/html"
 ```
 
 The `USER_ID` and `GROUP_ID` are used to set the user and group of the current user in the Docker container.
-The php version is set from the required version in the `composer.json` file.
 This is done to avoid permission issues when running the tests and to create files or folders (if needed) with the correct permissions.
+The `PHP_IMAGE` is `php:<php version>-fpm-alpine`, the php version is set from the required version in the `composer.json` file.
+The `container_name` is set to `mt-docker-<php version>`.

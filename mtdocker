@@ -32,7 +32,7 @@ function getContainerName(): string
     return $phpVersion === '' ? 'mt-docker-latest' : 'mt-docker-' . $phpVersion;
 }
 
-function createEnvFile(): void
+function createComposeFile(): void
 {
     $uid = getmyuid();
     $gid = getmygid();
@@ -40,26 +40,37 @@ function createEnvFile(): void
     $image = 'php:' . ($phpVersion === '' ? '' : $phpVersion . '-') . 'fpm-alpine';
     $containerName = $phpVersion === '' ? 'mt-docker-latest' : 'mt-docker-' . $phpVersion;
 
-    $write = file_put_contents(
-        getProjectDir() . '/.env.test', 'PHP_IMAGE=' . $image . PHP_EOL . 'USER_ID=' . $uid . PHP_EOL . 'GROUP_ID=' . $gid . PHP_EOL . 'CONTAINER_NAME=' . $containerName
-    );
+    $content = <<<EOF
+services:
+  php:
+    build:
+      context: .
+      dockerfile: "./vendor/mulertech/docker-tests/Dockerfile"
+      args:
+        USER_ID: $uid
+        GROUP_ID: $gid
+        PHP_IMAGE: "$image"
+    container_name: "$containerName"
+    volumes:
+      - "./:/var/www/html"
+EOF;
+
+    $write = file_put_contents(getProjectDir() . DIRECTORY_SEPARATOR . 'mt-compose.yml', $content);
 
     if ($write === false) {
-        echo 'Failed to create .env file';
+        echo 'Failed to create mt-compose.yml file';
     }
 }
 
 function dockerComposeCommand(): string
 {
-    $projectDir = getProjectDir();
-    $dockerTestDir = $projectDir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'mulertech' . DIRECTORY_SEPARATOR . 'docker-tests';
     $projectName = str_replace('.', '-', getContainerName());
-    return 'docker compose -f ' . $dockerTestDir . DIRECTORY_SEPARATOR . 'compose.yml --env-file ' . $projectDir . DIRECTORY_SEPARATOR . '.env.test --project-name ' . $projectName;
+    return 'docker compose -f ' . getProjectDir() . DIRECTORY_SEPARATOR . 'mt-compose.yml --project-name ' . $projectName;
 }
 
 function dockerComposeUp(string $arg2): void
 {
-    createEnvFile();
+    createComposeFile();
     $command = dockerComposeCommand() . ' up';
     $command .= $arg2 === '-d' ? ' -d' : '';
     exec($command);
