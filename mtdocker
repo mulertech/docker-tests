@@ -26,15 +26,22 @@ function getPhpVersion(): string
     return $matches[1][1] ?? $matches[1][0] ?? '';
 }
 
+function getContainerName(): string
+{
+    $phpVersion = getPhpVersion();
+    return $phpVersion === '' ? 'mt-docker-latest' : 'mt-docker-' . $phpVersion;
+}
+
 function createEnvFile(): void
 {
     $uid = getmyuid();
     $gid = getmygid();
     $phpVersion = getPhpVersion();
     $image = 'php:' . ($phpVersion === '' ? '' : $phpVersion . '-') . 'fpm-alpine';
+    $containerName = $phpVersion === '' ? 'mt-docker-latest' : 'mt-docker-' . $phpVersion;
 
     $write = file_put_contents(
-        getProjectDir() . '/.env.test', 'PHP_IMAGE=' . $image . PHP_EOL . 'USER_ID=' . $uid . PHP_EOL . 'GROUP_ID=' . $gid
+        getProjectDir() . '/.env.test', 'PHP_IMAGE=' . $image . PHP_EOL . 'USER_ID=' . $uid . PHP_EOL . 'GROUP_ID=' . $gid . PHP_EOL . 'CONTAINER_NAME=' . $containerName
     );
 
     if ($write === false) {
@@ -46,11 +53,13 @@ function dockerComposeCommand(): string
 {
     $projectDir = getProjectDir();
     $dockerTestDir = $projectDir . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'mulertech' . DIRECTORY_SEPARATOR . 'docker-tests';
-    return 'docker compose -f ' . $dockerTestDir . DIRECTORY_SEPARATOR . 'compose.yml --env-file ' . $projectDir . DIRECTORY_SEPARATOR . '.env.test';
+    $projectName = str_replace('.', '-', getContainerName());
+    return 'docker compose -f ' . $dockerTestDir . DIRECTORY_SEPARATOR . 'compose.yml --env-file ' . $projectDir . DIRECTORY_SEPARATOR . '.env.test --project-name ' . $projectName;
 }
 
 function dockerComposeUp(string $arg2): void
 {
+    createEnvFile();
     $command = dockerComposeCommand() . ' up';
     $command .= $arg2 === '-d' ? ' -d' : '';
     exec($command);
@@ -64,23 +73,19 @@ function dockerComposeDown(): void
 
 function test(): void
 {
-    $dockerUp = str_contains(exec('docker ps -a'), 'mt-docker-tests');
+    $containerName = getContainerName();
+    $dockerUp = str_contains(exec('docker ps -a'), $containerName);
     if (!$dockerUp) {
         dockerComposeUp('-d');
     }
 
-    $cmd = 'docker exec -it mt-docker-tests ./vendor/bin/phpunit';
+    $cmd = 'docker exec -it ' . $containerName . ' ./vendor/bin/phpunit';
     $output = shell_exec($cmd);
     echo $output;
 
     if (!$dockerUp) {
         dockerComposeDown();
     }
-}
-
-// Create .env.test file if it does not exist
-if (!file_exists(getProjectDir() . '/.env.test')) {
-    createEnvFile();
 }
 
 $arg1 = $_SERVER['argv'][1] ?? '';

@@ -94,13 +94,15 @@ To configure PHPUnit, follow these steps:
 
 ### Creating the `.env.test` file
 
-The `.env.test` file is created automatically when the package is installed. It contains the following information:
+The `.env.test` file is created automatically when the container starts. It contains the following information :
 
 ```sh
 PHP_IMAGE=php:8.4-fpm-alpine
 USER_ID=<id of the current user>
 GROUP_ID=<id of the group of the current user>
+CONTAINER_NAME=mt-docker-8.4
 ```
 
 The `USER_ID` and `GROUP_ID` are used to set the user and group of the current user in the Docker container.
+The php version is set from the required version in the `composer.json` file.
 This is done to avoid permission issues when running the tests and to create files or folders (if needed) with the correct permissions.
