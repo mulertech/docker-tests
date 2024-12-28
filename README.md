@@ -80,6 +80,7 @@ To configure the Docker container into PHPStorm, follow these steps:
         - Click on `OK`.
     - Set the configuration files to `./mt-compose.yml`.
     - Set the service to `php`.
+    - Set the Environment variables to `COMPOSE_PROJECT_NAME=php`.
     - Click on `OK`.
 6. Click on `OK` to save the configuration.
 
