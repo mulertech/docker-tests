@@ -36,6 +36,13 @@ To run the tests, use the following command:
 ./vendor/bin/mtdocker test
 ```
 
+To run the tests with code coverage, use the following command:
+
+```sh
+./vendor/bin/mtdocker test-coverage
+```
+The code coverage report will be generated in the `./.phpunit.cache/coverage` folder.
+
 This command will:  
 - Check if the Docker container `mt-docker-tests` is running.
 - If the container is not running, it will be started.
