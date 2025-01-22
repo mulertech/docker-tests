@@ -1,4 +1,11 @@
+
 # MulerTech Docker-tests
+
+___
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/mulertech/docker-tests.svg?style=flat-square)](https://packagist.org/packages/mulertech/docker-tests)
+[![Total Downloads](https://img.shields.io/packagist/dt/mulertech/docker-tests.svg?style=flat-square)](https://packagist.org/packages/mulertech/docker-tests)
+___
+
 
 The **MulerTech Docker-tests** package allows you to configure and run PHP tests in a Docker environment.
 
