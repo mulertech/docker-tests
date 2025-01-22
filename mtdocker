@@ -50,6 +50,8 @@ services:
         USER_ID: $uid
         GROUP_ID: $gid
         PHP_IMAGE: "$image"
+    environment:
+      - PHP_CS_FIXER_IGNORE_ENV=1
     container_name: "$containerName"
     volumes:
       - "./:/var/www/html"
@@ -82,15 +84,58 @@ function dockerComposeDown(): void
     exec($command);
 }
 
+function isDockerUp(): bool
+{
+    $projectName = str_replace('.', '-', getContainerName());
+    return str_contains(exec('docker compose ls'), $projectName);
+}
+
 function test(string $options = ''): void
 {
     $containerName = getContainerName();
-    $dockerUp = str_contains(exec('docker ps -a'), $containerName);
+    $dockerUp = isDockerUp();
+
     if (!$dockerUp) {
         dockerComposeUp('-d');
     }
 
     $cmd = 'docker exec -it ' . $containerName . ' ./vendor/bin/phpunit ' . $options;
+    $output = shell_exec($cmd);
+    echo $output;
+
+    if (!$dockerUp) {
+        dockerComposeDown();
+    }
+}
+
+function phpStan(): void
+{
+    $containerName = getContainerName();
+    $dockerUp = isDockerUp();
+
+    if (!$dockerUp) {
+        dockerComposeUp('-d');
+    }
+
+    $cmd = 'docker exec -it ' . $containerName . ' ./vendor/bin/phpstan analyse';
+    $output = shell_exec($cmd);
+    echo $output;
+
+    if (!$dockerUp) {
+        dockerComposeDown();
+    }
+}
+
+function phpCsFixer(): void
+{
+    $containerName = getContainerName();
+    $dockerUp = isDockerUp();
+
+    if (!$dockerUp) {
+        dockerComposeUp('-d');
+    }
+
+    $cmd = 'docker exec -it ' . $containerName . ' ./vendor/bin/php-cs-fixer fix src';
     $output = shell_exec($cmd);
     echo $output;
 
@@ -116,4 +161,18 @@ if ($arg1 === 'up') {
 
 if ($arg1 === 'down') {
     dockerComposeDown();
+}
+
+if ($arg1 === 'phpstan') {
+    phpStan();
+}
+
+if ($arg1 === 'cs-fixer') {
+    phpCsFixer();
+}
+
+if ($arg1 === 'all') {
+    phpCsFixer();
+    test();
+    phpStan();
 }

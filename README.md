@@ -43,11 +43,39 @@ To run the tests with code coverage, use the following command:
 ```
 The code coverage report will be generated in the `./.phpunit.cache/coverage` folder.
 
-This command will:  
-- Check if the Docker container `mt-docker-tests` is running.
+These commands will:  
+- Check if the Docker container is running.
 - If the container is not running, it will be started.
 - Run the PHPUnit tests in the container.
 - Stop the container if it was not running before the tests were executed.
+
+### Running phpstan
+
+To run phpstan, use the following command:
+
+```sh
+./vendor/bin/mtdocker phpstan
+```
+
+This command will:
+- Check if the Docker container is running.
+- If the container is not running, it will be started.
+- Run phpstan in the container.
+- Stop the container if it was not running before phpstan was executed.
+
+### Running php-cs-fixer
+
+To run php-cs-fixer, use the following command:
+
+```sh
+./vendor/bin/mtdocker php-cs-fixer
+```
+
+This command will:
+- Check if the Docker container is running.
+- If the container is not running, it will be started.
+- Run php-cs-fixer in the container.
+- Stop the container if it was not running before php-cs-fixer was executed.
 
 ### Starting the Docker container
 
