@@ -84,6 +84,20 @@ This command will:
 - Run php-cs-fixer in the container.
 - Stop the container if it was not running before php-cs-fixer was executed.
 
+### Running php-cs-fixer, phpunit and phpstan
+
+To run php-cs-fixer, phpunit and phpstan, use the following command:
+
+```sh
+./vendor/bin/mtdocker all
+```
+
+This command will:
+- Check if the Docker container is running.
+- If the container is not running, it will be started.
+- Run php-cs-fixer, phpunit and phpstan in the container.
+- Stop the container if it was not running before the checks were executed.
+
 ### Starting the Docker container
 
 To start the Docker container, use the following command :
