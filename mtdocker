@@ -29,7 +29,7 @@ function getPhpVersion(): string
 function getContainerName(): string
 {
     $phpVersion = getPhpVersion();
-    return $phpVersion === '' ? 'mt-docker-latest' : 'mt-docker-' . $phpVersion;
+    return 'docker-' . basename(getProjectDir()) . '-' . ($phpVersion === '' ? 'latest' : $phpVersion);
 }
 
 function createComposeFile(): void
@@ -38,7 +38,7 @@ function createComposeFile(): void
     $gid = getmygid();
     $phpVersion = getPhpVersion();
     $image = 'php:' . ($phpVersion === '' ? '' : $phpVersion . '-') . 'fpm-alpine';
-    $containerName = $phpVersion === '' ? 'mt-docker-latest' : 'mt-docker-' . $phpVersion;
+    $containerName = getContainerName();
 
     $content = <<<EOF
 services:
@@ -51,7 +51,7 @@ services:
         GROUP_ID: $gid
         PHP_IMAGE: "$image"
     environment:
-      - PHP_CS_FIXER_IGNORE_ENV=1
+      PHP_CS_FIXER_IGNORE_ENV: 1
     container_name: "$containerName"
     volumes:
       - "./:/var/www/html"
