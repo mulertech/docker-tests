@@ -87,7 +87,7 @@ function dockerComposeDown(): void
 function isDockerUp(): bool
 {
     $projectName = str_replace('.', '-', getContainerName());
-    return str_contains(exec('docker compose ls'), $projectName);
+    return str_contains(exec('docker compose ls | grep ' . $projectName), $projectName);
 }
 
 function test(string $options = ''): void
