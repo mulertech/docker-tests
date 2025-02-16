@@ -165,9 +165,55 @@ services:
     container_name: "$containerName"
     volumes:
       - "./:/var/www/html"
+    environment:
+      PHP_CS_FIXER_IGNORE_ENV: 1
 ```
 
 The `USER_ID` and `GROUP_ID` are used to set the user and group of the current user in the Docker container.
 This is done to avoid permission issues when running the tests and to create files or folders (if needed) with the correct permissions.
 The `PHP_IMAGE` is `php:<php version>-fpm-alpine`, the php version is set from the required version in the `composer.json` file.
-The `container_name` is set to `mt-docker-<php version>`.
+The `container_name` is set to `mt-docker-<package name>-<php version>`.
+
+### Adding the database to mt-compose.yml
+
+If your project requires a database (the composer.json file contains ext-pdo),
+the mt-compose.yml file will be automatically updated to include a database service. Here is an example configuration for MySQL:
+
+```sh
+services:
+  php:
+    build:
+      context: .
+      dockerfile: "./vendor/mulertech/docker-tests/Dockerfile"
+      args:
+        USER_ID: $uid
+        GROUP_ID: $gid
+        PHP_IMAGE: "$image"
+    container_name: "$containerName"
+    volumes:
+      - "./:/var/www/html"
+    environment:
+      PHP_CS_FIXER_IGNORE_ENV: 1
+      DATABASE_HOST: db
+      DATABASE_PORT: "3306"
+      DATABASE_PATH: "/db"
+      DATABASE_SCHEME: "mysql"
+      DATABASE_QUERY: "serverVersion=5.7"
+      DATABASE_USER: "user"
+      DATABASE_PASS: "password"
+    links:
+      - db
+    networks:
+      - default
+  db:
+    image: "mysql:8"
+    environment:
+      MYSQL_DATABASE: db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - default
+```
+
+This configuration adds a db service using the mysql:8 image and sets the necessary environment variables to connect to the database from the PHP container.
