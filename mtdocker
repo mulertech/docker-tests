@@ -26,6 +26,12 @@ function getPhpVersion(): string
     return $matches[1][1] ?? $matches[1][0] ?? '';
 }
 
+function dbNeeded(): string
+{
+    $composer = file_get_contents(getProjectDir() . '/composer.json');
+    return str_contains($composer, 'ext-pdo');
+}
+
 function getContainerName(): string
 {
     $phpVersion = getPhpVersion();
@@ -50,12 +56,38 @@ services:
         USER_ID: $uid
         GROUP_ID: $gid
         PHP_IMAGE: "$image"
-    environment:
-      PHP_CS_FIXER_IGNORE_ENV: 1
     container_name: "$containerName"
     volumes:
       - "./:/var/www/html"
+    environment:
+      PHP_CS_FIXER_IGNORE_ENV: 1
 EOF;
+
+    if (dbNeeded()) {
+        $content .= <<<EOF
+
+      DATABASE_HOST: db
+      DATABASE_PORT: "3306"
+      DATABASE_PATH: "/db"
+      DATABASE_SCHEME: "mysql"
+      DATABASE_QUERY: "serverVersion=5.7"
+      DATABASE_USER: "user"
+      DATABASE_PASS: "password"
+    links:
+      - db
+    networks:
+      - default
+  db:
+    image: "mysql:8"
+    environment:
+      MYSQL_DATABASE: db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - default
+EOF;
+    }
 
     $write = file_put_contents(getProjectDir() . DIRECTORY_SEPARATOR . 'mt-compose.yml', $content);
 
