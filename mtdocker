@@ -22,7 +22,7 @@ function getPhpVersion(): string
         return '';
     }
 
-    preg_match_all('/[\^>=~]+([0-9]\.[0-9]*)|[\^>=~]+([0-9]\.[0-9]*)/', $php, $matches);
+    preg_match_all('/[\^>=~]+(\d\.\d*)/', $php, $matches);
     return $matches[1][1] ?? $matches[1][0] ?? '';
 }
 
@@ -61,7 +61,6 @@ services:
       - "./:/var/www/html"
     environment:
       PHP_CS_FIXER_IGNORE_ENV: 1
-      COMPOSE_BAKE: true
 EOF;
 
     if (dbNeeded()) {
