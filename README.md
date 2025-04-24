@@ -120,6 +120,26 @@ To stop the Docker container, use the following command :
 ./vendor/bin/mtdocker down
 ```
 
+### Checking the status of containers
+
+To check the status of the Docker containers, use the following command:
+
+```sh
+./vendor/bin/mtdocker ps
+```
+
+This command will display all containers related to the project and their current status.
+
+### Getting the project name
+
+To get the project name used for Docker Compose (useful for PHPStorm configuration), use the following command:
+
+```sh
+./vendor/bin/mtdocker name
+```
+
+This command will output the project name that should be used in the `COMPOSE_PROJECT_NAME` environment variable when configuring PHPStorm. (see below)
+
 ### Configuring the Docker container into PHPStorm
 
 To configure the Docker container into PHPStorm, follow these steps:
@@ -136,7 +156,7 @@ To configure the Docker container into PHPStorm, follow these steps:
         - Click on `OK`.
     - Set the configuration files to `./mt-compose.yml`.
     - Set the service to `php`.
-    - Set the Environment variables to `COMPOSE_PROJECT_NAME=php`.
+    - Set the Environment variables to `COMPOSE_PROJECT_NAME=<project name>` the project name is given by the "./vendor/bin/mtdocker name" command line argument. (see above)
     - Click on `OK`.
 6. Click on `OK` to save the configuration.
 
