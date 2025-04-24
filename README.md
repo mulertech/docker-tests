@@ -212,8 +212,13 @@ services:
       MYSQL_USER: user
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "$dbPort:3306"
     networks:
       - default
 ```
 
 This configuration adds a db service using the mysql:8 image and sets the necessary environment variables to connect to the database from the PHP container.
+The database is also exposed on a unique port on your host machine, derived from the container name.
+This ensures that different projects can run simultaneously without port conflicts.
+The port is deterministically generated based on the container name and will be consistent for the same project.

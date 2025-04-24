@@ -38,6 +38,13 @@ function getContainerName(): string
     return 'docker-' . basename(getProjectDir()) . '-' . ($phpVersion === '' ? 'latest' : $phpVersion);
 }
 
+function getDbPort(): int
+{
+    // Generate a port between 10000-65000 based on container name hash
+    $hash = md5(getContainerName());
+    return 10000 + (hexdec(substr($hash, 0, 4)) % 55000);
+}
+
 function createComposeFile(): void
 {
     $uid = getmyuid();
@@ -64,6 +71,7 @@ services:
 EOF;
 
     if (dbNeeded()) {
+        $dbPort = getDbPort();
         $content .= <<<EOF
 
       DATABASE_HOST: db
@@ -84,6 +92,8 @@ EOF;
       MYSQL_USER: user
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "$dbPort:3306"
     networks:
       - default
 EOF;
