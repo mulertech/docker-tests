@@ -162,7 +162,7 @@ function phpStan(): void
         dockerComposeUp('-d');
     }
 
-    $cmd = 'docker exec -it ' . $containerName . ' ./vendor/bin/phpstan analyse';
+    $cmd = 'docker exec -it ' . $containerName . ' ./vendor/bin/phpstan analyse --memory-limit=1G';
     $output = shell_exec($cmd);
     echo $output;
 
