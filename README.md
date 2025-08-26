@@ -140,6 +140,36 @@ To get the project name used for Docker Compose (useful for PHPStorm configurati
 
 This command will output the project name that should be used in the `COMPOSE_PROJECT_NAME` environment variable when configuring PHPStorm. (see below)
 
+### Initializing templates
+
+To initialize a development environment template, use one of the following commands:
+
+```sh
+# Auto-detect template based on composer.json (recommended)
+./vendor/bin/mtdocker init
+
+# Or specify a template explicitly
+./vendor/bin/mtdocker init apache-simple
+./vendor/bin/mtdocker init apache-mysql
+./vendor/bin/mtdocker init symfony
+```
+
+This command will:
+- Create a `.mtdocker/` directory in your project root
+- Copy all necessary Docker configuration files
+- Create a `.env` file with auto-detected system settings (USER_ID, GROUP_ID, PHP version)
+- Generate deterministic ports based on project name to avoid conflicts
+- Provide a complete development environment ready to use
+
+**Auto-detection logic:**
+- If `composer.json` contains `ext-pdo` → `apache-mysql` template
+- If no `ext-pdo` found → `apache-simple` template
+
+**Available templates:**
+- `apache-simple`: Basic Apache + PHP environment (equivalent to legacy test system)
+- `apache-mysql`: Apache + PHP + MySQL environment (equivalent to legacy test system with database)
+- `symfony`: Complete Symfony development environment with Apache, MySQL, PhpMyAdmin, Redis, and MailHog
+
 ### Configuring the Docker container into PHPStorm
 
 To configure the Docker container into PHPStorm, follow these steps:

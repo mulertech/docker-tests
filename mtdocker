@@ -113,15 +113,157 @@ EOF;
 
 function dockerComposeCommand(): string
 {
-    return 'docker compose -f ' . getProjectDir() . DIRECTORY_SEPARATOR . 'mt-compose.yml --project-name ' . getProjectName();
+    $projectDir = getProjectDir();
+    $mtdockerPath = $projectDir . DIRECTORY_SEPARATOR . '.mtdocker';
+    
+    if (file_exists($mtdockerPath . DIRECTORY_SEPARATOR . 'compose.yml')) {
+        return 'docker compose -f ' . $mtdockerPath . DIRECTORY_SEPARATOR . 'compose.yml --project-directory ' . $mtdockerPath . ' --project-name ' . getProjectName();
+    }
+    
+    return 'docker compose -f ' . $projectDir . DIRECTORY_SEPARATOR . 'mt-compose.yml --project-name ' . getProjectName();
 }
 
 function dockerComposeUp(string $arg2): void
 {
-    createComposeFile();
+    $projectDir = getProjectDir();
+    $mtdockerPath = $projectDir . DIRECTORY_SEPARATOR . '.mtdocker';
+    
+    if (!file_exists($mtdockerPath . DIRECTORY_SEPARATOR . 'compose.yml')) {
+        createComposeFile();
+    }
+    
     $command = dockerComposeCommand() . ' up';
     $command .= $arg2 === '-d' ? ' -d' : '';
     exec($command);
+}
+
+function initTemplate(string $template): void
+{
+    // Auto-detect template if not specified
+    if (empty($template)) {
+        $template = dbNeeded() ? 'apache-mysql' : 'apache-simple';
+        echo "Auto-detected template: $template\n";
+    }
+
+    $projectDir = getProjectDir();
+    $mtdockerPath = $projectDir . DIRECTORY_SEPARATOR . '.mtdocker';
+    $templatesPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $template;
+
+    if (!is_dir($templatesPath)) {
+        echo "Template '$template' not found.\n";
+        echo "Templates available: apache-simple, apache-mysql, symfony\n";
+        return;
+    }
+
+    if (is_dir($mtdockerPath)) {
+        echo ".mtdocker directory already exists. Do you want to replace it? (y/N): ";
+        $handle = fopen("php://stdin", "r");
+        $response = trim(fgets($handle));
+        fclose($handle);
+
+        if (strtolower($response) !== 'y') {
+            echo "Initialization cancelled.\n";
+            return;
+        }
+
+        exec("rm -rf " . escapeshellarg($mtdockerPath));
+    }
+
+    // Create .mtdocker directory
+    mkdir($mtdockerPath, 0755, true);
+
+    // Copy template files
+    exec("cp -r " . escapeshellarg($templatesPath) . "/* " . escapeshellarg($mtdockerPath));
+
+    // Create .env file from .env.example
+    $envExamplePath = $mtdockerPath . DIRECTORY_SEPARATOR . '.env.example';
+    $envPath = $mtdockerPath . DIRECTORY_SEPARATOR . '.env';
+
+    if (file_exists($envExamplePath)) {
+        $envContent = file_get_contents($envExamplePath);
+
+        // Auto-detect USER_ID and GROUP_ID
+        $uid = getmyuid();
+        $gid = getmygid();
+        $envContent = str_replace(
+                ['USER_ID=1000', 'GROUP_ID=1000'],
+                ["USER_ID=$uid", "GROUP_ID=$gid"],
+                $envContent
+        );
+
+        // Auto-detect PHP version and image
+        $phpVersion = getPhpVersion();
+        $phpImage = 'php:' . ($phpVersion === '' ? '8.3' : $phpVersion) . '-fpm-alpine';
+        $envContent = str_replace('PHP_IMAGE=php:8.3-fpm-alpine', "PHP_IMAGE=$phpImage", $envContent);
+
+        // Generate available ports
+        $envContent = generateAvailablePorts($envContent);
+
+        file_put_contents($envPath, $envContent);
+        echo ".env file created with your system settings.\n";
+    }
+
+    echo "Template '$template' initialized successfully in .mtdocker/\n";
+    echo "You can now use: ./vendor/bin/mtdocker up -d\n";
+}
+
+function generateAvailablePorts(string $envContent): string
+{
+    $projectName = basename(getProjectDir());
+
+    // Base ports that are always present
+    $ports = [
+            'APACHE_PORT' => generatePortFromName($projectName)
+    ];
+
+    // Add other ports only if they exist in the .env.example
+    if (strpos($envContent, 'MYSQL_PORT=') !== false) {
+        $ports['MYSQL_PORT'] = generatePortFromName($projectName . '-mysql');
+    }
+    if (strpos($envContent, 'PHPMYADMIN_PORT=') !== false) {
+        $ports['PHPMYADMIN_PORT'] = generatePortFromName($projectName . '-phpmyadmin');
+    }
+    if (strpos($envContent, 'REDIS_PORT=') !== false) {
+        $ports['REDIS_PORT'] = generatePortFromName($projectName . '-redis');
+    }
+    if (strpos($envContent, 'MAILHOG_PORT=') !== false) {
+        $ports['MAILHOG_PORT'] = generatePortFromName($projectName . '-mailhog');
+    }
+    if (strpos($envContent, 'MAILHOG_SMTP_PORT=') !== false) {
+        $ports['MAILHOG_SMTP_PORT'] = generatePortFromName($projectName . '-mailhog-smtp');
+    }
+
+    foreach ($ports as $varName => $port) {
+        $envContent = preg_replace("/^{$varName}=\d+$/m", "{$varName}={$port}", $envContent);
+    }
+
+    return $envContent;
+}
+
+function generatePortFromName(string $name): int
+{
+    // Generate a deterministic port based on the name hash
+    $hash = md5($name);
+    // Convert first 4 hex chars to decimal and map to port range 10000-65000
+    $port = 10000 + (hexdec(substr($hash, 0, 4)) % 55000);
+
+    // Ensure the port is available, if not increment until we find one
+    return findAvailablePortFromBase($port);
+}
+
+function findAvailablePortFromBase(int $basePort): int
+{
+    // Start from the base port and find the first available one
+    for ($port = $basePort; $port < $basePort + 100; $port++) {
+        $connection = @fsockopen('127.0.0.1', $port, $errno, $errstr, 1);
+        if (!$connection) {
+            return $port;
+        }
+        fclose($connection);
+    }
+
+    // If no port is available in the range, fall back to the base port
+    return $basePort;
 }
 
 function dockerComposeDown(): void
@@ -242,4 +384,8 @@ if ($arg1 === 'ps') {
 
 if ($arg1 === 'name') {
     echo getProjectName() . PHP_EOL;
+}
+
+if ($arg1 === 'init') {
+    initTemplate($arg2);
 }
